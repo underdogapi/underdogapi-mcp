@@ -1,0 +1,41 @@
+{
+  "name": "underdog-api-mcp",
+  "version": "0.1.0",
+  "description": "MCP server (stdio) for Underdog API: Underdog Fantasy pick'em lines, Higher/Lower multipliers, line history and graded results as tools.",
+  "type": "module",
+  "bin": {
+    "underdog-api-mcp": "bin/underdog-api-mcp.mjs"
+  },
+  "files": [
+    "bin",
+    "README.md",
+    "LICENSE",
+    "server.json"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "mcpName": "com.underdogapi/underdog",
+  "keywords": [
+    "mcp",
+    "model context protocol",
+    "underdog",
+    "underdog fantasy",
+    "pickem",
+    "player props",
+    "sports data"
+  ],
+  "homepage": "https://underdogapi.com/mcp",
+  "license": "MIT",
+  "author": "Stunning Couches LLC <support@underdogapi.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/underdogapi/underdogapi-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/underdogapi/underdogapi-mcp/issues"
+  }
+}

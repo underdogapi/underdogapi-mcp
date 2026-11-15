@@ -1,0 +1,28 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "com.underdogapi/underdog",
+  "title": "Underdog API",
+  "description": "Underdog Fantasy pick'em lines with Higher/Lower multipliers, line history, changes and graded results.",
+  "version": "0.1.0",
+  "websiteUrl": "https://underdogapi.com/mcp",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://underdogapi.com/api/mcp",
+      "headers": [
+        { "name": "Authorization", "description": "Bearer <your Underdog API key>; free key at https://underdogapi.com/sign-up", "isRequired": true, "isSecret": true }
+      ]
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "underdog-api-mcp",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        { "name": "UNDERDOG_API_KEY", "description": "Underdog API key (free, no card). Keyless demo tools work without it.", "isRequired": false, "isSecret": true }
+      ]
+    }
+  ]
+}
