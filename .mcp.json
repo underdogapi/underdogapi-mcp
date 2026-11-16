@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "underdogapi": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "underdog-api-mcp"
+      ],
+      "env": {
+        "UNDERDOG_API_KEY": ""
+      }
+    }
+  }
+}
