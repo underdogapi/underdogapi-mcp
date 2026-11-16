@@ -1,6 +1,12 @@
-# underdog-api-mcp
+# Underdog MCP server: underdog-api-mcp
 
-An MCP server (stdio) for [Underdog API](https://underdogapi.com): Underdog Fantasy pick'em lines with separate Higher
+An Underdog Fantasy MCP server for Claude, ChatGPT, Cursor and any MCP client. Ask an AI agent for current Underdog lines, line moves or hit rates; it answers from recorded data through underdogapi.com.
+
+[Website](https://underdogapi.com/?utm_source=github&utm_medium=readme&utm_campaign=underdogapi-mcp) | [Docs](https://underdogapi.com/docs?utm_source=github&utm_medium=readme&utm_campaign=underdogapi-mcp) | [Free API key](https://underdogapi.com/sign-up?utm_source=github&utm_medium=readme&utm_campaign=underdogapi-mcp) | [Pricing](https://underdogapi.com/pricing?utm_source=github&utm_medium=readme&utm_campaign=underdogapi-mcp) | [All SDKs](https://underdogapi.com/sdks?utm_source=github&utm_medium=readme&utm_campaign=underdogapi-mcp)
+
+Also for underdogapi.com: [Python: `pip install underdog-api`](https://github.com/underdogapi/underdogapi-python) | [JavaScript: `npm install underdog-api`](https://github.com/underdogapi/underdogapi-js)
+
+An MCP server (stdio) for [Underdog API](https://underdogapi.com/?utm_source=github&utm_medium=readme&utm_campaign=underdogapi-mcp): Underdog Fantasy pick'em lines with separate Higher
 and Lower payout multipliers, recorded line moves, the board at past instants, graded results and hit rates, as tools
 for Claude, ChatGPT, Cursor, VS Code and any MCP client. No dependencies; Node 18+.
 
@@ -33,7 +39,7 @@ Claude Desktop, Cursor, Windsurf and other JSON-configured clients:
 ```
 
 No key yet? `demo_board`, `demo_changes` and `credit_costs` work without one, so an agent can learn the response shape
-first. A free key (100 credits a month, no card) is at https://underdogapi.com/sign-up.
+first. A free key (100 credits a month, no card) is at https://underdogapi.com/sign-up?utm_source=github&utm_medium=readme&utm_campaign=underdogapi-mcp.
 
 ## Tools
 
