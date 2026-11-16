@@ -12,29 +12,38 @@ const MAX_TEXT = 60_000;
 
 const s = (description, extra = {}) => ({type: 'string', description, ...extra});
 const n = (description, extra = {}) => ({type: 'integer', description, ...extra});
-const league = s('League code from get_coverage, for example NBA, NFL, NHL, CBB, CFB, TENNIS, CS');
-const limit = n('Rows per page', {minimum: 1, maximum: 200});
-const cursor = s('meta.next_cursor from the previous page, with the same filters');
+const league = s('Sport code in upper case from get_coverage, for example NBA, NFL, NHL, CBB, CFB, TENNIS, CS; comma-separate several. Omit for all.');
+const limit = n('Rows per page, 1 to 200.', {minimum: 1, maximum: 200});
+const cursor = s('meta.next_cursor from the previous page, sent with the same filters. Omit for the first page.');
+const stat = s('Exact machine stat slug, for example points, rebounds or passing_yards (get_coverage lists them).');
+const search = s('Part of a player or team name, case-insensitive.');
+const payoutTier = s('Only sides with this payout tier: standard, boosted (pays more than standard) or discounted (pays less).', {enum: ['standard', 'boosted', 'discounted']});
+const result = s('Only this outcome: higher, lower or void.', {enum: ['higher', 'lower', 'void']});
+const player = s('Player name, case-insensitive.');
+const date = s('Game date YYYY-MM-DD, US Eastern.');
+const KEYED = ' Needs UNDERDOG_API_KEY (free key, no card, at https://underdogapi.com/sign-up); without one it returns the sign-up link and spends nothing.';
+const PAID = ' Paid plans; a Free key gets a labelled sample and the upgrade link (HTTP 402).';
+const DEMO = ' No key, no credits. The rows are fictional: never present them as real lines.';
 
-/** name, description, REST path, input schema, keyless. Every path and parameter is documented at /docs. */
+/** name, title, description, REST path, input schema, keyless. Every path and parameter is documented at /docs. */
 export const TOOLS = [
-  ['demo_board', 'Fictional Underdog-style board in the live response shape. No key needed; use it to learn the schema.', '/api/v1/demo/projections', {league, limit}, true],
-  ['demo_changes', 'Fictional change events in the live shape. No key needed.', '/api/v1/demo/changes', {limit}, true],
-  ['credit_costs', 'The credit policy, or the credits one request path would cost (path, for example /api/v1/projections?limit=200). No key needed.', '/api/v1/credit-costs', {path: s('Request path with query string')}, true],
-  ['get_coverage', 'Leagues and stats on the board now, and the first recorded date per league. Call first.', '/api/v1/coverage', {}, false],
-  ['get_board', 'Current Underdog Fantasy pick\'em lines with separate Higher and Lower payout multipliers per side.', '/api/v1/projections', {league, stat: s('Stat slug, for example points'), search: s('Player or team'), payout_tier: s('standard, boosted or discounted'), view: s('compact for smaller rows'), limit, cursor}, false],
-  ['get_odds', 'Each current line with its Higher and Lower side as odds entries. 5 minutes behind on the free plan.', '/api/v1/odds', {league, stat: s('Stat slug'), player: s('Player name or pl_ id'), limit, cursor}, false],
-  ['get_changes', 'Recorded change events (line.moved, multiplier changes, suspensions, closes) across the board.', '/api/v1/changes', {league, event_type: s('For example line.moved'), since: s('ISO timestamp'), limit, cursor}, false],
-  ['get_line_history', 'Every recorded change of one market, from get_board ids (udm_...).', '/api/v1/projections/{projection_id}/history', {projection_id: s('Market id udm_...')}, false],
-  ['get_board_as_of', 'The board as it stood at a past instant (as_of ISO timestamp). Free reads the last 24 hours.', '/api/v1/board', {as_of: s('ISO timestamp, for example 2026-11-14T23:00:00Z'), league, limit, cursor}, false],
-  ['get_results', 'Graded lines: Higher, Lower or void against the final box score. Paid plans; Free answers with a labelled sample.', '/api/v1/results', {league, player: s('Player name'), stat: s('Stat slug'), date: s('US Eastern date YYYY-MM-DD'), result: s('higher, lower or void'), limit, cursor}, false],
-  ['get_hit_rates', 'How often one player went Higher or Lower over recent graded games. Paid plans.', '/api/v1/hit-rates', {player: s('Player name'), stat: s('Stat slug'), league, last: n('Games', {minimum: 1, maximum: 100})}, false],
-  ['get_multipliers', 'Payout multipliers per side on the current board.', '/api/v1/multipliers', {league}, false],
-  ['get_payouts', 'Standard, Flex and Streaks payout reference tables.', '/api/v1/payouts', {}, false],
-  ['get_training_set', 'One labelled row per graded line for model training. Paid plans.', '/api/v1/training-set', {league, stat: s('Stat slug'), limit, cursor}, false],
-].map(([name, description, path, properties, keyless]) => ({
-  name, description, path, keyless,
-  inputSchema: {type: 'object', properties, required: name === 'get_line_history' ? ['projection_id'] : name === 'get_board_as_of' ? ['as_of'] : name === 'get_hit_rates' ? ['player'] : [], additionalProperties: false},
+  ['demo_board', 'Demo board (keyless)', 'Fictional Underdog-style board rows in the exact live shape of get_board, to learn the fields before the user has a key.' + DEMO, '/api/v1/demo/projections', {league, limit}, true],
+  ['demo_changes', 'Demo change feed (keyless)', 'Fictional change events (line.opened, line.moved and so on) in the exact live shape of get_changes, to build a polling loop before the user has a key.' + DEMO, '/api/v1/demo/changes', {limit}, true],
+  ['credit_costs', 'Credit costs (keyless)', 'The credit policy, or the credits one request would cost before you run it. Use it before a large keyed read. No key, no credits.', '/api/v1/credit-costs', {path: s('Request path with its query string, for example /api/v1/projections?limit=200. Omit for the whole policy.')}, true],
+  ['get_coverage', 'Coverage', 'Which leagues and stat slugs are on the board now, with line counts and the first recorded date per league. Call it first to pick valid league and stat values and avoid empty queries.' + KEYED, '/api/v1/coverage', {}, false],
+  ['get_board', 'Current board', 'The live Underdog Fantasy pick\'em board: player, stat, line, and separate Higher and Lower payout multipliers per side with their tier, plus start time and observed_at. Use it for "what are the lines now"; get_board_as_of for a past instant, get_changes to poll only what moved, get_odds for sportsbook prices at the same line.' + KEYED, '/api/v1/projections', {league, stat, search, payout_tier: payoutTier, view: s('compact (flat, smaller rows) or full (default, nested, with matched sportsbook prices).', {enum: ['compact', 'full']}), limit, cursor}, false],
+  ['get_odds', 'Lines with sportsbook prices', 'Each current line as Higher and Lower odds entries, next to FanDuel, DraftKings and Novig prices and the no-vig fair probability at the same line where a book prices it. Use it to judge whether a pick\'em side is good value; get_board has the lines alone. Five minutes behind on the free plan.' + KEYED, '/api/v1/odds', {league, market: s('Stat slug, for example points.'), player: s('Player name or pl_ id.'), limit, cursor}, false],
+  ['get_changes', 'Change feed', 'Ordered feed of board changes: line.opened, line.moved, line.repriced (multiplier), line.suspended, line.closed, line.restored, alternates.changed, each with before and after values. Store meta.next_cursor and pass it back to get only newer changes. For one market use get_line_history.' + KEYED, '/api/v1/changes', {league, stat, event_type: s('Only one event type.', {enum: ['line.opened', 'line.moved', 'line.repriced', 'line.suspended', 'line.closed', 'line.restored', 'alternates.changed']}), since: s('Only changes observed at or after this ISO 8601 time.'), limit, cursor}, false],
+  ['get_line_history', 'Line history of one market', 'Every recorded change of one market, oldest to newest: line and multiplier moves with times. Use it for "how has this line moved"; take the udm_ id from get_board.' + KEYED, '/api/v1/projections/{projection_id}/history', {projection_id: s('Market id from get_board, for example udm_... (required).')}, false],
+  ['get_board_as_of', 'Board at a past instant', 'The board as it stood at a past instant, rebuilt from recorded history, for backtests and "what was the line at tip-off". Free keys read the last 24 hours. For now use get_board.' + KEYED, '/api/v1/board', {as_of: s('ISO 8601 time with a time zone, for example 2026-11-14T23:00:00Z (required).'), league, stat, search, limit, cursor}, false],
+  ['get_results', 'Graded results', 'Reviewed lines graded against the final box score: closing line, actual stat, and Higher, Lower or void (ties void). Use it to check how lines settled; get_hit_rates summarises one player.' + PAID + KEYED, '/api/v1/results', {league, player, player_id: s('Public player id from a previous row.'), stat, date, result, limit, cursor}, false],
+  ['get_hit_rates', 'Player hit rates', 'How often one player went Higher or Lower across recent graded games, per stat, voids excluded. Send player or player_id. For the graded rows themselves use get_results.' + PAID + KEYED, '/api/v1/hit-rates', {player, player_id: s('Public player id from a previous row.'), stat, league, last: n('Most recent graded games to count, 1 to 100.', {minimum: 1, maximum: 100})}, false],
+  ['get_multipliers', 'Boosted and discounted sides', 'Only the sides on the current board whose payout multiplier differs from standard (boosted or discounted), with the multiplier. Use it to find boosted picks; get_board has every side.' + KEYED, '/api/v1/multipliers', {league, stat, payout_tier: payoutTier}, false],
+  ['get_payouts', 'Payout tables', 'Dated Underdog base payout tables for Standard, Flex and Streaks entries by pick count, to compute break-even probabilities. Reference data; takes no arguments.' + KEYED, '/api/v1/payouts', {}, false],
+  ['get_training_set', 'Training set', 'One labelled row per graded line (line, multipliers, closing side tier, outcome) for model training, as JSON or CSV. For browsing results use get_results.' + PAID + KEYED, '/api/v1/training-set', {league, stat, player, date, include_void: {type: 'boolean', description: 'true also returns void rows.'}, format: s('json (default) or csv.', {enum: ['json', 'csv']}), limit, cursor}, false],
+].map(([name, title, description, path, properties, keyless]) => ({
+  name, title, description, path, keyless,
+  inputSchema: {type: 'object', properties, required: name === 'get_line_history' ? ['projection_id'] : name === 'get_board_as_of' ? ['as_of'] : [], additionalProperties: false},
 }));
 
 const NO_KEY = 'This tool needs an Underdog API key. Get a free one (no card) at https://underdogapi.com/sign-up and set UNDERDOG_API_KEY in this server\'s environment, or start an agent signup with POST https://underdogapi.com/api/v1/agent/signup. The demo_board and demo_changes tools work without a key.';
@@ -70,7 +79,8 @@ export async function handle(msg) {
   if (method === 'initialize') return reply(id, {protocolVersion: params?.protocolVersion ?? '2025-06-18', capabilities: {tools: {}}, serverInfo: {name: 'underdog-api', version: VERSION},
     instructions: 'Underdog Fantasy pick\'em data from underdogapi.com (independent, not affiliated with Underdog Fantasy). Call get_coverage first. Every row has observed_at; quote it. A 402 means the plan lacks the data: tell the user what it lacks and show upgrade_url; never work around it.'});
   if (method === 'ping') return reply(id, {});
-  if (method === 'tools/list') return reply(id, {tools: TOOLS.map(({name, description, inputSchema}) => ({name, description, inputSchema}))});
+  if (method === 'tools/list') return reply(id, {tools: TOOLS.map(({name, title, description, inputSchema}) => ({name, title, description, inputSchema,
+    annotations: {readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true}}))});
   if (method === 'tools/call') return reply(id, await callTool(params?.name, params?.arguments));
   if (id === undefined || id === null) return; // notifications (notifications/initialized and others)
   return fail(id, -32601, `Method not found: ${method}`);
